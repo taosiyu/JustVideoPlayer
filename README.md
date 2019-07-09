@@ -21,7 +21,7 @@ a simple tool for play video by FFMPEG
 本示例直接运行就可以，自带一段示例视频
 
 ### 注意
-![justPlayer](https://github.com/taosiyu/JustVideoPlayer/raw/master/img/img2)
+![justPlayer](https://github.com/taosiyu/JustVideoPlayer/raw/master/img/img2.png)
 在配置中，请配置对应的格式所对应的解码方式(AVPlayer或者FFMPEG)
 
 ## 如何使用
