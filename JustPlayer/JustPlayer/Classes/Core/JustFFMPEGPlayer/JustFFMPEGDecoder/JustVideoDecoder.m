@@ -83,23 +83,28 @@ static AVPacket flush_packet;
     self.packetQueue = [JustPacketQueue packetQueueWithTimebase:self.timebase];
     self.videoToolBoxMaxDecodeFrameCount = 20;
     self.codecContextMaxDecodeFrameCount = 3;
-//    if (self.videoToolBoxEnable && _codec_context->codec_id == AV_CODEC_ID_H264) {
-//        self.videoToolBox = [JustVideoToolBox videoToolBoxWithCodecContext:self->_codec_context];
-//        if ([self.videoToolBox trySetupVTSession]) {
-//            self->_videoToolBoxDidOpen = YES;
-//        } else {
-//            [self.videoToolBox flush];
-//            self.videoToolBox = nil;
-//        }
-//    }
-    if (self.codecContextAsync) {
+    if (self.videoToolBoxEnable && _codec_context->codec_id == AV_CODEC_ID_H264) {
+        self.videoToolBox = [JustVideoToolBox videoToolBoxWithCodecContext:self->_codec_context];
+        if ([self.videoToolBox trySetupVTSession]) {
+            self->_videoToolBoxDidOpen = YES;
+        } else {
+            [self.videoToolBox flush];
+            self.videoToolBox = nil;
+        }
+    }
+    if (self.videoToolBoxDidOpen) {
+        self.frameQueue = [JustFrameQueue frameQueue];
+        self.frameQueue.minFrameCount = 4;
+        self->_decodeAsync = YES;
+    }
+    else if (self.codecContextAsync) {
         self.frameQueue = [JustFrameQueue frameQueue];
         self.framePool = [JustFramePool videoPool];
-//        self->_decodeAsync = YES;
+        self->_decodeAsync = YES;
     } else {
         self.framePool = [JustFramePool videoPool];
-//        self->_decodeSync = YES;
-//        self->_decodeOnMainThread = YES;
+        self->_decodeSync = YES;
+        self->_decodeOnMainThread = YES;
     }
 }
 
@@ -125,7 +130,7 @@ static AVPacket flush_packet;
 
 - (JustVideoFrame *)getFrameAsync
 {
-    if (self.codecContextAsync) {
+    if (self.videoToolBoxDidOpen || self.codecContextAsync) {
         return [self.frameQueue getFrameAsync];
     } else {
         return [self codecContextDecodeSync];
@@ -134,7 +139,7 @@ static AVPacket flush_packet;
 
 - (JustVideoFrame *)getFrameAsyncPosistion:(NSTimeInterval)position
 {
-    if (self.codecContextAsync) {
+    if (self.videoToolBoxDidOpen || self.codecContextAsync) {
         NSMutableArray <JustFrame *> * discardFrames = nil;
         JustVideoFrame * videoFrame = [self.frameQueue getFrameAsyncPosistion:position discardFrames:&discardFrames];
         for (JustVideoFrame * obj in discardFrames) {
@@ -145,6 +150,17 @@ static AVPacket flush_packet;
         return [self codecContextDecodeSync];
     }
 }
+
+- (void)discardFrameBeforPosition:(NSTimeInterval)position
+{
+    if (self.videoToolBoxDidOpen || self.codecContextAsync) {
+        NSMutableArray <JustFrame *> * discardFrames = [self.frameQueue discardFrameBeforPosition:position];
+        for (JustVideoFrame * obj in discardFrames) {
+            [obj cancel];
+        }
+    }
+}
+
 
 #pragma mark - decode get frame
 
@@ -250,7 +266,7 @@ static AVPacket flush_packet;
     return videoFrame;
 }
 
-#pragma mark - videoToolBox
+#pragma mark - #pragma mark - VideoToolBox 硬件编码-后续
 
 - (void)videoToolBoxDecodeAsyncThread
 {
@@ -391,7 +407,7 @@ static AVPacket flush_packet;
     [self.packetQueue flush];
     [self.frameQueue flush];
     [self.framePool flush];
-//    [self putPacket:flush_packet];
+    [self putPacket:flush_packet];
 }
 
 - (void)destroy
@@ -410,14 +426,5 @@ static AVPacket flush_packet;
         _temp_frame = NULL;
     }
 }
-
-
-
-#pragma mark - VideoToolBox 硬件编码-后续
-
-
-
-
-
 
 @end

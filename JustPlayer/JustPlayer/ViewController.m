@@ -36,7 +36,7 @@
     }];
     
     //旋转动画
-    [self animation];
+//    [self animation];
 }
 
 - (void)animation{

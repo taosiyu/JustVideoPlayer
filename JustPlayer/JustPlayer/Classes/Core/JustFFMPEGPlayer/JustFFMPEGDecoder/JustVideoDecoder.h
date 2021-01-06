@@ -38,6 +38,10 @@
 @property (nonatomic, assign, readonly) BOOL empty;
 @property (nonatomic, assign, readonly) NSTimeInterval duration;
 
+@property (nonatomic, assign, readonly) BOOL decodeSync;
+@property (nonatomic, assign, readonly) BOOL decodeAsync;
+@property (nonatomic, assign, readonly) BOOL decodeOnMainThread;
+
 @property (nonatomic, assign) BOOL paused;
 @property (nonatomic, assign) BOOL endOfFile;
 

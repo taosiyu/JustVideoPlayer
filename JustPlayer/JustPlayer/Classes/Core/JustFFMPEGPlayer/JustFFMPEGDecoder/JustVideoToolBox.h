@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <VideoToolbox/VideoToolbox.h>
-#import "avformat.h"
+#import <libavformat/avformat.h>
 
 @interface JustVideoToolBox : NSObject
 
